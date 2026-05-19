@@ -1,0 +1,15 @@
+
+spring:
+  application:
+    name: slack-app
+  datasource:
+    url: jdbc:postgresql://localhost:5432/slack_app
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
