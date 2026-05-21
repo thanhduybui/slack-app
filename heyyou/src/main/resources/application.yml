@@ -3,7 +3,7 @@ spring:
   application:
     name: slack-app
   datasource:
-    url: jdbc:postgresql://localhost:5432/slack_app
+    url: jdbc:postgresql://localhost:5433/slack_app
     username: postgres
     password: postgres
 
