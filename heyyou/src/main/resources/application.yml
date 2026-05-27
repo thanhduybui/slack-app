@@ -13,3 +13,19 @@ spring:
 
   flyway:
     enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-this-secret-to-at-least-32-bytes}
+    access-token-ttl: 15m
+    refresh-token-ttl: 30d
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
