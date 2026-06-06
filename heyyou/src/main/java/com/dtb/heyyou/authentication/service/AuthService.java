@@ -49,12 +49,7 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         String email = normalizeEmail(request.email());
-        String password = requireText(request.password(), "Password is required");
-        String displayName = requireText(request.displayName(), "Display name is required");
 
-        if (password.length() < 6) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Password must be at least 6 characters");
-        }
         if (userRepository.existsByEmail(email)) {
             throw new ApiException(HttpStatus.CONFLICT, "Email is already registered");
         }
@@ -62,8 +57,8 @@ public class AuthService {
         Instant now = Instant.now();
         User user = new User();
         user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(password));
-        user.setDisplayName(displayName);
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setDisplayName(request.displayName().trim());
         user.setAvatarUrl(blankToNull(request.avatarUrl()));
         user.setStatus(UserStatus.ACTIVE);
         user.setCreatedAt(now);
@@ -76,11 +71,10 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request) {
         String email = normalizeEmail(request.email());
-        String password = requireText(request.password(), "Password is required");
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
         if (user.getStatus() != UserStatus.ACTIVE) {
@@ -92,7 +86,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse refresh(RefreshTokenRequest request) {
-        String rawToken = requireText(request.refreshToken(), "Refresh token is required");
+        String rawToken = request.refreshToken().trim();
         RefreshToken refreshToken = refreshTokenRepository.findByToken(rawToken)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
@@ -113,7 +107,7 @@ public class AuthService {
 
     @Transactional
     public void logout(RefreshTokenRequest request) {
-        String rawToken = requireText(request.refreshToken(), "Refresh token is required");
+        String rawToken = request.refreshToken().trim();
         refreshTokenRepository.findByToken(rawToken).ifPresent(refreshToken -> {
             refreshToken.setRevoked(true);
             refreshTokenRepository.save(refreshToken);
@@ -145,18 +139,7 @@ public class AuthService {
     }
 
     private String normalizeEmail(String email) {
-        String value = requireText(email, "Email is required").toLowerCase(Locale.ROOT);
-        if (!value.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Email is invalid");
-        }
-        return value;
-    }
-
-    private String requireText(String value, String message) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, message);
-        }
-        return value.trim();
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private String blankToNull(String value) {
